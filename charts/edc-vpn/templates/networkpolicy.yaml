@@ -1,0 +1,25 @@
+{{- if .Values.networkPolicy.enabled }}
+# Ingress only to the exposed ports
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "edc-vpn.fullname" . }}
+  labels:
+    {{- include "edc-vpn.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "edc-vpn.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        {{- range .Values.service.expose }}
+        - port: {{ include "edc-vpn.portName" . }}
+          protocol: TCP
+        {{- end }}
+      {{- with .Values.networkPolicy.from }}
+      from:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

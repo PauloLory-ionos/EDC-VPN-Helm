@@ -1,0 +1,10 @@
+{{ include "edc-vpn.fullname" . }}: connector {{ .Values.participantId }}.
+
+DSP endpoint:    {{ include "edc-vpn.dspCallbackAddress" . }}
+Management API:  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "edc-vpn.fullname" . }} {{ .Values.ports.management }}
+                 then http://localhost:{{ .Values.ports.management }}{{ .Values.paths.management }}/v3
+{{- if .Values.vpn.apiUrl }}
+VPN Service:     {{ .Values.vpn.apiUrl }} (tunnel events to {{ include "edc-vpn.vpnCallbackUrl" . }})
+{{- else }}
+VPN extension:   off (vpn.apiUrl is empty)
+{{- end }}

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: edc-vpn
+description: >-
+  SIMPL EDC connector with the VPN extension. The VPN Service is deployed separately (its own
+  chart); this chart only points the connector at it.
+type: application
+version: 0.1.0
+appVersion: "0.0.1"
+keywords:
+  - edc
+  - vpn
+  - simpl

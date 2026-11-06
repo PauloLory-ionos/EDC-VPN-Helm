@@ -1,0 +1,117 @@
+# The connector's stores are in memory, so the Deployment always runs a single replica.
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: "vpn-edc.cr.de-fra.ionos.com/edc-vpn-demo/connector"   # e.g. <registry>.cr.de-fra.ionos.com/edc-vpn-demo/connector
+  tag: "0.0.2"
+  pullPolicy: IfNotPresent
+imagePullSecrets:
+  - name: ionos-cr
+
+participantId: provider
+# Address other connectors use to reach this one's DSP endpoint; defaults to this release's Service
+# (http://<fullname>.<namespace>.svc.cluster.local:<protocol port><protocol path>).
+dspCallbackAddress: ""
+hostname: ""
+
+ports:
+  default: 8181
+  management: 8182
+  protocol: 8282
+  control: 8283
+  public: 8383
+paths:
+  default: /api
+  management: /management
+  protocol: /protocol
+  control: /control
+  public: /public
+
+# Management API key (edc.api.auth.key): set `value` directly, or point `secretName` at an existing
+# Secret (it wins over `value`). Both empty leaves it unset.
+apiKey:
+  value: "password"
+  secretName: ""
+  secretKey: apiKey
+
+infrastructure:
+  provisioningApiUrl: http://simplurl/api/v1/simpl
+  # Secret holding edc.infrastructure.simpl.default.auth.token; empty to leave it unset.
+  defaultAuthToken:
+    secretName: ""
+    secretKey: token
+
+# The VPN extension. Off while apiUrl is empty.
+vpn:
+  # The VPN Service's local API, e.g. http://127.0.0.1:8080/vpnApi/v1 when it runs as a sidecar in
+  # this Pod (see extraContainers)
+  apiUrl: "http://poc2vpn-vpn-service:8080/vpnApi/v1"
+  # Where the VPN Service posts tunnel events: the connector's control API. Defaults to this
+  # release's Service; use http://127.0.0.1:<control port><control path> with a sidecar.
+  callbackUrl: ""
+  pollIntervalSeconds: 10
+
+# Any other connector setting, written as-is into config.properties
+extraConfig: {}
+#  edc.transfer.send.retry.limit: "3"
+
+javaOpts: ""
+extraEnv: []
+
+# Containers and volumes added to the Pod as they are, e.g. the VPN Service as a sidecar
+extraContainers: []
+extraVolumes: []
+
+service:
+  type: ClusterIP
+  expose:
+    - default
+    - management
+    - protocol
+    - control
+    - public
+
+networkPolicy:
+  # Ingress allowed only to the exposed ports, from `from` (any source when empty)
+  enabled: false
+  from: []
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  privileged: false
+  capabilities:
+    drop:
+      - ALL
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+# tcp on the management port: the connector has no health API module
+probes:
+  readiness:
+    initialDelaySeconds: 15
+    periodSeconds: 10
+  liveness:
+    initialDelaySeconds: 60
+    periodSeconds: 20
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

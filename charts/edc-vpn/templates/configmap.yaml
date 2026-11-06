@@ -1,0 +1,32 @@
+# The connector's config.properties. Secrets are not in it: they reach the connector as environment
+# variables (EDC_API_AUTH_KEY, EDC_INFRASTRUCTURE_SIMPL_DEFAULT_AUTH_TOKEN), see deployment.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "edc-vpn.fullname" . }}-config
+  labels:
+    {{- include "edc-vpn.labels" . | nindent 4 }}
+data:
+  config.properties: |
+    edc.participant.id={{ required "participantId is required" .Values.participantId }}
+    web.http.port={{ .Values.ports.default }}
+    web.http.path={{ .Values.paths.default }}
+    web.http.management.port={{ .Values.ports.management }}
+    web.http.management.path={{ .Values.paths.management }}
+    web.http.protocol.port={{ .Values.ports.protocol }}
+    web.http.protocol.path={{ .Values.paths.protocol }}
+    web.http.control.port={{ .Values.ports.control }}
+    web.http.control.path={{ .Values.paths.control }}
+    web.http.public.port={{ .Values.ports.public }}
+    web.http.public.path={{ .Values.paths.public }}
+    edc.dsp.callback.address={{ include "edc-vpn.dspCallbackAddress" . }}
+
+    edc.infrastructure.simpl.provisioning.api.url={{ .Values.infrastructure.provisioningApiUrl }}
+
+    # VPN extension: disabled while the VPN Service URL is empty
+    edc.infrastructure.simpl.vpn.api.url={{ .Values.vpn.apiUrl }}
+    edc.infrastructure.simpl.vpn.callback.url={{ include "edc-vpn.vpnCallbackUrl" . }}
+    edc.infrastructure.simpl.vpn.poll.interval.seconds={{ .Values.vpn.pollIntervalSeconds }}
+    {{- range $key, $value := .Values.extraConfig }}
+    {{ $key }}={{ $value }}
+    {{- end }}
